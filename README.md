@@ -16,14 +16,17 @@ I Implemented the "Hard DMM 1" clustering algorithm for a mixture of Dirichlet d
 
 The density of a mixture model with $k$ components for an observation $x_i$ is given by the mixture density: 
 
-$$p(x_i) = \sum_{j=1}^{k} \pi_j f_j(x_i | \alpha_j) \tag{1}$$ 
+$$p(x_i) = \sum_{j=1}^{k} \pi_j f_j(x_i | \alpha_j) \quad \text{(1)}$$ 
 
-where $\pi$ is a vector of length $k$ of weights (i.e. $\pi = (\pi_1, \pi_2,...,\pi_k)$) that are used as the mixture proportions of each component $k$ such that $\sum_{i=1}^{k} \pi_i =1$ and $0 \le \pi_i \le 1$. The $f_j(x_i | \alpha_j)$ is the density component of the mixture $j$ with the corresponding parameters of that mixture $\alpha_j$ (with the length of the dimension of the Dirichlet model, and since we have $k$ Dirichlet models, we have that $j=1,2,...,k$); so $\alpha = (\alpha_1, \alpha_2, ..., \alpha_k)$ (again, each of the length of the dimension of the Dirichlet model) represents the vector of all the parameters of the model. 
+where $\pi$ is a vector of length $k$ of weights (i.e. $\pi = (\pi_1, \pi_2,...,\pi_k)$ ) that are used as the mixture proportions of each component $k$ such that $\sum_{i=1}^{k} \pi_i =1$ and $0 \le \pi_i \le 1$. The $f_j(x_i | \alpha_j)$ is the density component of the mixture $j$ with the corresponding parameters of that mixture $\alpha_j$ (with the length of the dimension of the Dirichlet model, and since we have $k$ Dirichlet models, we have that $j=1,2,...,k$); so $\alpha = (\alpha_1, \alpha_2, ..., \alpha_k)$ (again, each of the length of the dimension of the Dirichlet model) represents the vector of all the parameters of the model. 
 
 Accordingly, the log-likelihood of the model of size $N$ is given by: 
-$$\log p(x_1,x_2,...,x_N|\alpha,\pi) = \sum_{i=1}^{N}\log \left(\sum_{j=1}^{k}\pi_j f_j(x_i | \alpha_j)\right) \tag{2}$$
+
+$$\log p(x_1,x_2,...,x_N|\alpha,\pi) = \sum_{i=1}^{N}\log \left(\sum_{j=1}^{k}\pi_j f_j(x_i | \alpha_j)\right) \quad \text{(2)}$$
+
 The equation that represents the probability of a data point $i$ for cluster $j$ is given as:
-$$\gamma_{ij} = \frac{\pi_j f_j(x_i | \alpha_j)}{\sum_{l=1}^{k} \pi_l f_l(x_i | \alpha_l)} \tag{3}$$
+
+$$\gamma_{ij} = \frac{\pi_j f_j(x_i | \alpha_j)}{\sum_{l=1}^{k} \pi_l f_l(x_i | \alpha_l)} \quad \text{(3)}$$
 
 The approach in the paper implements an EM algorithm, and accordingly they aim at optimizing the function:
 
@@ -31,9 +34,9 @@ $$ Q(\alpha, alpha^{t-1}) = E[\sum_{i=1}^{N}\log(p(x_i,z_i|\alpha))|x,\alpha^{t-
 
 And this function is optimized with respect to $\alpha$ and $\pi$, having us update $\pi_j$ with $\frac{N_j}{N}$ where $N_j = \sum_{i=1}^{N} \gamma_{ij}$, the cluster assignment being cluster = $\underset{j}{\mathrm{argmax}} \gamma_{ij}$, and $\alpha$ with the MLE of $\alpha$ with the clustered data. The research paper references another paper (Estimating a Dirichlet distribution, Thomas P. Minka, 2000) to find a suitable estimate for $\alpha_j^{MLE}$; it uses a fixed/one point iteration using the Newton-Raphson algorithm to provide the MLE of the Dirichlet parameters:
 
-$$\Psi(\alpha_{jm}^{new}) = \Psi(\sum_{m=1}^{p}\alpha_{jm}^{old}) + \frac{1}{N_j}\sum_{i=1}^{N_j} \log (x_{im}) \tag{4}$$
+$$\Psi(\alpha_{jm}^{new}) = \Psi(\sum_{m=1}^{p}\alpha_{jm}^{old}) + \frac{1}{N_j}\sum_{i=1}^{N_j} \log (x_{im}) \quad \text{(4)}$$
 
-Where $\Psi$ is the digamma function, p is the dimension of the distribution, and the second term takes the row-wise mean of the log of the data points in the cluster given by the $\underset{j}{\mathrm{argmax}} \gamma_{ij}$ corresponding to the $\alpha_j$. This requires another Newton-Raphson algorithm to invert the $|Psi$ (i.e. to solve $\Psi^{-1}(y)=x$ for the equation $\Psi(x)=y$), but the paper (P. Minka, 2000; Appendix C) provides a reasonable estimate (five Newton iterations are sufficient to reach fourteen digits of precision for the initialization used in my function).
+Where $\Psi$ is the digamma function, p is the dimension of the distribution, and the second term takes the row-wise mean of the log of the data points in the cluster given by the $\underset{j}{\mathrm{argmax}} \gamma_{ij}$ corresponding to the $\alpha_j$. This requires another Newton-Raphson algorithm to invert the $\Psi$ (i.e. to solve $\Psi^{-1}(y)=x$ for the equation $\Psi(x)=y$), but the paper (P. Minka, 2000; Appendix C) provides a reasonable estimate (five Newton iterations are sufficient to reach fourteen digits of precision for the initialization used in my function).
 
 The research paper also provides an initialization for the $\alpha$ and $\pi$ parameters. For the Dirichlet Mixture Model, they initialize $\alpha$ with the centroids of KMeans multiplied with a scalar c (they use c=60, as did I), and for $\pi$, it can be initialized by sampling from a Dirichlet (1,1,..,1) model, or the empirical ratios of the number of cluster members in the KMeans algorithm and total observations can also be used (they used the KMeans method, so I did too).
 
