@@ -26,6 +26,7 @@ The equation that represents the probability of a data point $i$ for cluster $j$
 $$\gamma_{ij} = \frac{\pi_j f_j(x_i | \alpha_j)}{\sum_{l=1}^{k} \pi_l f_l(x_i | \alpha_l)} \tag{3}$$
 
 The approach in the paper implements an EM algorithm, and accordingly they aim at optimizing the function:
+
 $$ Q(\alpha, alpha^{t-1}) = E[\sum_{i=1}^{N}\log(p(x_i,z_i|\alpha))|x,\alpha^{t-1}] = \sum_{i=1}^{N}\sum_{j=1}^{k} \gamma_{ij}\log\pi_j + \sum_{i=1}^{N}\sum_{j=1}^{k}\gamma_{ij}\log f_j(x_i|\alpha_j)$$
 
 And this function is optimized with respect to $\alpha$ and $\pi$, having us update $\pi_j$ with $\frac{N_j}{N}$ where $N_j = \sum_{i=1}^{N} \gamma_{ij}$, the cluster assignment being cluster = $\underset{j}{\mathrm{argmax}} \gamma_{ij}$, and $\alpha$ with the MLE of $\alpha$ with the clustered data. The research paper references another paper (Estimating a Dirichlet distribution, Thomas P. Minka, 2000) to find a suitable estimate for $\alpha_j^{MLE}$; it uses a fixed/one point iteration using the Newton-Raphson algorithm to provide the MLE of the Dirichlet parameters:
@@ -44,19 +45,19 @@ With that said, the algorithm can be expressed as follows:
 
 $$
 \begin{array}{l}
-\text{Initialize the model parameters } \alpha, \pi, \text{ and the log likelihood using equation } (2). \\[10pt]
+\text{Initialize the model parameters } \alpha, \pi, \text{ and the log likelihood using equation } (2). \\
 \textbf{While} \, \text{log difference} \ge \epsilon: \\
-\quad 1. \; \text{Evaluate } \gamma_{ij} \text{ from equation } (3) \text{ using parameter values } \alpha \text{ and } \pi, \text{ and the data.} \\[10pt]
-\quad 2. \; \pi_j^{\text{new}} = \frac{N_j}{N} \quad \text{where } N_j = \sum_{i=1}^{N} \gamma_{ij}. \\[10pt]
-\quad 3. \; \textbf{for } i = 1, \dots, N: \\
+\quad 1. \ \text{Evaluate } \gamma_{ij} \text{ from equation } (3) \text{ using parameter values } \alpha \text{ and } \pi, \text{ and the data.} \\
+\quad 2. \ \pi_j^{\text{new}} = \frac{N_j}{N} \quad \text{where } N_j = \sum_{i=1}^{N} \gamma_{ij}. \\
+\quad 3. \ \textbf{for } i = 1, \dots, N: \\
 \quad \quad \text{Cluster} = \underset{j}{\mathrm{argmax}} \, \gamma_{ij}. \\
-\quad \quad \text{Assign data point } x_i \text{ with cluster } z_i \, (\text{a random variable for the cluster membership}). \\[10pt]
-\quad 4. \; \textbf{for } j = 1, \dots, k: \\
+\quad \quad \text{Assign data point } x_i \text{ with cluster } z_i \, (\text{a random variable for the cluster membership}). \\
+\quad 4. \ \textbf{for } j = 1, \dots, k: \\
 \quad \quad \textbf{if} \, \text{cluster is empty:} \\
 \quad \quad \quad \text{Use initial values of } \alpha_j \text{ as update.} \\
 \quad \quad \textbf{else:} \\
-\quad \quad \quad \alpha_j^{\text{new}} = \alpha_j^{\text{MLE}} \\[10pt]
-\quad 5. \; \text{Re-evaluate the log-likelihood using updated parameters.}
+\quad \quad \quad \alpha_j^{\text{new}} = \alpha_j^{\text{MLE}} \\
+\quad 5. \ \text{Re-evaluate the log-likelihood using updated parameters.}
 \end{array}
 $$
 
