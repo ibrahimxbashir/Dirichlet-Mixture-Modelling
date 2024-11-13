@@ -2,7 +2,7 @@ import numpy as np
 from scipy.special import digamma, gamma, loggamma, polygamma
 from sklearn.cluster import KMeans
 
-
+# Auxiliary Functions
 def initial_params(data, k, c=60):
     """Initialize parameters using k-means clustering"""
     kmeans = KMeans(n_clusters=k, random_state=42)
@@ -82,6 +82,7 @@ def log_likelihood_Q(x, pi, alpha, gammaij):
     return term1 + term2
 
 
+# The Clustering Algorithm
 def clustering(data, k=3, epsilon=1e-4, max_iter=1000):
     """Main clustering function using Dirichlet mixture model"""
     data = np.array(data)
@@ -130,3 +131,24 @@ def clustering(data, k=3, epsilon=1e-4, max_iter=1000):
         'weights': pi_hats,
         'clusters': cluster
     }
+
+
+'''
+
+# Example usage from .rmd walkthrough:
+
+# Generate sample data
+rng = np.random.default_rng(42)
+sample_dirichlet = np.vstack([
+    dirichlet.rvs([30, 20, 10], size=500, random_state=rng),
+    dirichlet.rvs([10, 20, 30], size=100, random_state=rng),
+    dirichlet.rvs([15, 15, 15], size=300, random_state=rng)
+])
+
+# Run clustering
+result = clustering(sample_dirichlet, k=3)
+result['alphas']
+np.bincount(result['clusters'])
+
+'''
+
