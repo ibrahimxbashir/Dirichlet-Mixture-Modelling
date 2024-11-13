@@ -53,17 +53,18 @@ $$
 \quad 1. \ \text{Evaluate } \gamma_{ij} \text{ from equation } (3) \text{ using parameter values } \alpha \text{ and } \pi, \text{ and the data.} \\
 \quad 2. \ \pi_j^{\text{new}} = \frac{N_j}{N} \quad \text{where } N_j = \sum_{i=1}^{N} \gamma_{ij}. \\
 \quad 3. \ \textbf{for } i = 1, \dots, N: \\
-\quad \quad \text{Cluster} = \underset{j}{\mathrm{argmax}} \, \gamma_{ij}. \\
-\quad \quad \text{Assign data point } x_i \text{ with cluster } z_i \, (\text{a random variable for the cluster membership}). \\
+\quad \quad \quad \text{Cluster} = \underset{j}{\mathrm{argmax}} \, \gamma_{ij}. \\
+\quad \quad \quad \text{Assign data point } x_i \text{ with cluster } z_i \, (\text{a random variable for the cluster membership}). \\
 \quad 4. \ \textbf{for } j = 1, \dots, k: \\
-\quad \quad \textbf{if} \, \text{cluster is empty:} \\
-\quad \quad \quad \text{Use initial values of } \alpha_j \text{ as update.} \\
-\quad \quad \textbf{else:} \\
-\quad \quad \quad \alpha_j^{\text{new}} = \alpha_j^{\text{MLE}} \\
+\quad \quad \quad \textbf{if} \ \text{cluster is empty:} \\
+\quad \quad \quad \quad \text{Use initial values of } \alpha_j \text{ as update.} \\
+\quad \quad \quad \textbf{else:} \\
+\quad \quad \quad \quad \alpha_j^{\text{new}} = \alpha_j^{\text{MLE}} \\
 \quad 5. \ \text{Re-evaluate the log-likelihood using updated parameters.}
 \end{array}
 $$
 
 If you would like to see how I have used this approach in a practical setting with real data, you can read the end of my post on medium:
+
 https://ibrahimxbashir.medium.com/dirichlet-mixture-modelling-in-r-from-scratch-e29ee1a10c8b
 
