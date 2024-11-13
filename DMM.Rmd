@@ -1,0 +1,222 @@
+---
+title: "DMM"
+author: "Ibrahim Bashir"
+date: "2024-11-13"
+output: html_document
+---
+
+```{r libraries, warning=FALSE, message=FALSE}
+library(DirichletReg) # For dirichlet sampling and density computation
+library(stats) # For some statistical tools
+library(rgl) # For plotting 3D plots
+library(knitr) # To allow the 3D plots into the knitted file
+
+```
+
+### Dirichlet Overview
+The Dirichlet distribution is a multivariate probability distribution defined on the simplex in an k-dimensional space. It takes as input a vector of positive real numbers (alpha parameters) and produces a probability distribution over k-dimensional vectors where each component is a non-negative real number that sums to 1. And in the context of the Dirichlet distribution, the alpha values represent the parameters that determine the shape of the distribution. More specifically, the alpha parameters determine the concentration of probability mass around the corners of the simplex. A high alpha value for a specific component means that the distribution is more concentrated around that corner, resulting in higher probabilities for vectors with larger values in that component.
+
+By adjusting the values of the alpha parameters, you can control the shape and spread of the distribution. For example, when all alpha values are equal, the distribution is uniform (equal probability mass across all components). When some alpha values are much larger than others, the distribution becomes more peaked or concentrated in those corners. The idea behind the meaning of the parameters of the distribution will be elaborated on in the real-life example section at the end.
+
+
+### Math Overview for Modelling Algorithm
+
+I Implemented the "Hard DMM 1" clustering algorithm for a mixture of Dirichlet distributions with provision for empty clusters (Algorithm 1) from the referenced research paper "Clustering compositional data using Dirichlet mixture model" by Samyajoy Pal and Christian Heumann (2022). Here is an overview of the relevant functions used in the algorithm:
+
+The density of a mixture model with $k$ components for an observation $x_i$ is given by the mixture density: 
+
+$$p(x_i) = \sum_{j=1}^{k} \pi_j f_j(x_i | \alpha_j) \tag{1}$$ 
+
+where $\pi$ is a vector of length $k$ of weights (i.e. $\pi = (\pi_1, \pi_2,...,\pi_k)$) that are used as the mixture proportions of each component $k$ such that $\sum_{i=1}^{k} \pi_i =1$ and $0 \le \pi_i \le 1$. The $f_j(x_i | \alpha_j)$ is the density component of the mixture $j$ with the corresponding parameters of that mixture $\alpha_j$ (with the length of the dimension of the Dirichlet model, and since we have $k$ Dirichlet models, we have that $j=1,2,...,k$); so $\alpha = (\alpha_1, \alpha_2, ..., \alpha_k)$ (again, each of the length of the dimension of the Dirichlet model) represents the vector of all the parameters of the model. 
+
+Accordingly, the log-likelihood of the model of size $N$ is given by: 
+$$\log p(x_1,x_2,...,x_N|\alpha,\pi) = \sum_{i=1}^{N}\log \left(\sum_{j=1}^{k}\pi_j f_j(x_i | \alpha_j)\right) \tag{2}$$
+The equation that represents the probability of a data point $i$ for cluster $j$ is given as:
+$$\gamma_{ij} = \frac{\pi_j f_j(x_i | \alpha_j)}{\sum_{l=1}^{k} \pi_l f_l(x_i | \alpha_l)} \tag{3}$$
+
+The approach in the paper implements an EM algorithm, and accordingly they aim at optimizing the function:
+$$ Q(\alpha, alpha^{t-1}) = E[\sum_{i=1}^{N}\log(p(x_i,z_i|\alpha))|x,\alpha^{t-1}] = \sum_{i=1}^{N}\sum_{j=1}^{k} \gamma_{ij}\log\pi_j + \sum_{i=1}^{N}\sum_{j=1}^{k}\gamma_{ij}\log f_j(x_i|\alpha_j)$$
+And this function is optimized with respect to $\alpha$ and $\pi$, having us update $\pi_j$ with $\frac{N_j}{N}$ where $N_j = \sum_{i=1}^{N} \gamma_{ij}$, the cluster assignment being cluster = $\underset{j}{\mathrm{argmax}} \gamma_{ij}$, and $\alpha$ with the MLE of $\alpha$ with the clustered data. The research paper references another paper (Estimating a Dirichlet distribution, Thomas P. Minka, 2000) to find a suitable estimate for $\alpha_j^{MLE}$; it uses a fixed/one point iteration using the Newton-Raphson algorithm to provide the MLE of the Dirichlet parameters:
+
+$$\Psi(\alpha_{jm}^{new}) = \Psi(\sum_{m=1}^{p}\alpha_{jm}^{old}) + \frac{1}{N_j}\sum_{i=1}^{N_j} \log (x_{im}) \tag{4}$$
+Where $\Psi$ is the digamma function, p is the dimension of the distribution, and the second term takes the row-wise mean of the log of the data points in the cluster given by the $\underset{j}{\mathrm{argmax}} \gamma_{ij}$ corresponding to the $\alpha_j$. This requires another Newton-Raphson algorithm to invert the $|Psi$ (i.e. to solve $\Psi^{-1}(y)=x$ for the equation $\Psi(x)=y$), but the paper (P. Minka, 2000; Appendix C) provides a reasonable estimate (five Newton iterations are sufficient to reach fourteen digits of precision for the initialization used in my function).
+
+The research paper also provides an initialization for the $\alpha$ and $\pi$ parameters. For the Dirichlet Mixture Model, they initialize $\alpha$ with the centroids of KMeans multiplied with a scalar c (they use c=60, as did I), and for $\pi$, it can be initialized by sampling from a Dirichlet (1,1,..,1) model, or the empirical ratios of the number of cluster members in the KMeans algorithm and total observations can also be used (they used the KMeans method, so I did too).
+
+With that said, the auxiliary functions below compute all of these steps. The function `initial_params`: provides the initialization parameters for $\alpha$ and $\pi$; `log.lik.gij`: computes the log-likelihood equation found in $(2)$; `gammaij`: computes the $\gamma_{ij}$ from $(3)$; and `inv.digamma`: uses the Newton-Raphson iterative algorithm to estimate $\Psi^{-1}(x)$ within some specified precision (I use 1e-15 for the tolerance). 
+
+
+### Auxiliary Functions
+```{r Auxiliary Functions}
+initial_params <- function(data, k, c=60){ # Function for initializing parameters
+  kmeans_result <- kmeans(data, centers = k)
+  return(list('alpha' = kmeans_result$centers * c, 'pi' = table(kmeans_result$cluster)/nrow(data)))
+}
+
+log.lik.gij <- function(x,pi,alpha){ # Function for computing the log-likelihood 
+  pi.fj <- matrix(nrow=nrow(alpha),ncol=nrow(x))
+  for(j in 1:nrow(alpha)){
+    pi.fj[j,] <- pi[j]*ddirichlet(x,alpha[j,])
+  }
+  return(sum(log(colSums(pi.fj))))
+}
+
+gammaij <- function(x,pi,alpha){ # Function for computing gamma_{ij}
+  pij.fj <- matrix(nrow=nrow(x),ncol=nrow(alpha))
+  for(j in 1:nrow(alpha)){
+    pij.fj[,j] <- pi[j]*ddirichlet(x,alpha[j,])
+  }
+  return(pij.fj/rowSums(pij.fj))
+}
+
+inv.digamma <- function(x, tol = 1e-16, max_iter = 100) { # Algorithm for inverting the digamma function
+  M <- as.numeric(x >= -2.22) # Initial estimates
+  y <- M * (exp(x) + 0.5) + (1 - M) * (-1 / (x - digamma(1)))
+  
+  for (iter in 1:max_iter) {
+    y_new <- y - (digamma(y) - x) / trigamma(y) # Newton-Raphson update
+    if (abs(y_new - y) < tol) { # Check for convergence
+      break
+    }
+    y <- y_new
+  }
+  return(y)
+}
+
+
+log.lik.Q <- function(x,pi,alpha,gammaij){ 
+  fj <- matrix(nrow=nrow(x),ncol=nrow(alpha))
+  for(j in 1:nrow(alpha)){
+    fj[,j] <- ddirichlet(x,alpha[j,])
+  }
+  term1 <- sum(colSums(gammaij*log(pi)))
+  term2 <- sum(colSums(gammaij*log(fj)))
+  return(term1 + term2)
+}
+
+```
+
+
+### Dirichlet Mixture Modelling Algorithm
+
+With that said, the algorithm can be expressed as follows:
+
+$$
+\begin{array}{l}
+\text{Initialize the model parameters } \alpha, \pi, \text{ and the log likelihood using equation } (2). \\[10pt]
+\textbf{While} \, \text{log difference} \ge \epsilon: \\
+\quad 1. \; \text{Evaluate } \gamma_{ij} \text{ from equation } (3) \text{ using parameter values } \alpha \text{ and } \pi, \text{ and the data.} \\[10pt]
+\quad 2. \; \pi_j^{\text{new}} = \frac{N_j}{N} \quad \text{where } N_j = \sum_{i=1}^{N} \gamma_{ij}. \\[10pt]
+\quad 3. \; \textbf{for } i = 1, \dots, N: \\
+\quad \quad \text{Cluster} = \underset{j}{\mathrm{argmax}} \, \gamma_{ij}. \\
+\quad \quad \text{Assign data point } x_i \text{ with cluster } z_i \, (\text{a random variable for the cluster membership}). \\[10pt]
+\quad 4. \; \textbf{for } j = 1, \dots, k: \\
+\quad \quad \textbf{if} \, \text{cluster is empty:} \\
+\quad \quad \quad \text{Use initial values of } \alpha_j \text{ as update.} \\
+\quad \quad \textbf{else:} \\
+\quad \quad \quad \alpha_j^{\text{new}} = \alpha_j^{\text{MLE}} \\[10pt]
+\quad 5. \; \text{Re-evaluate the log-likelihood using updated parameters.}
+\end{array}
+$$
+
+
+```{R Clustering Algorithm}
+Clustering <- function(data, k=3, epsilon=1e-4, max.iter=1000){
+  data <- as.matrix(data)
+  params <- initial_params(data, k) # Initialize parameters
+  alphas_hats <- initial_alpha <- params$alpha
+  pi_hats <- initial_pi <- params$pi
+
+  loglik.i <- log.lik.gij(data, initial_pi, initial_alpha) # Evaluate initial log-likelihood
+  logs <- c(loglik.i) # To store the log likelihoods
+  
+  logdiff <- epsilon + 1
+  iters <- 0
+  while((logdiff > epsilon) & max.iter > iters){
+    gammas <- gammaij(data, pi_hats, alphas_hats) # Evaluate the gammas
+    pi_hats <- colSums(gammas)/nrow(data) # Evaluate Pi
+    
+    cluster <- matrix(apply(gammas, 1, which.max), ncol = 1) # Assign cluster values
+    cluster_group <- table(factor(cluster, levels=1:k))
+    for(i in 1:k){
+      if(cluster_group[i] == 0){ # If no points in cluster, update with initial alpha
+        alphas_hats[i,] <- initial_alpha[i,]
+      } else {
+        cluster_indices <- which(cluster == i)
+        cluster_data_points <- as.matrix(data[cluster_indices, ]) # Get data points in cluster iteration
+        psi_a <- digamma(sum(alphas_hats[i,])) + colMeans(log(cluster_data_points)) # Calculate digamma of new alpha
+        alphas_hats[i,] <- sapply(psi_a, inv.digamma) # Update alpha with inverse of digamma, alternatively, we can do: fit_dirichlet(cluster_data_points)$alpha 
+      }
+    }
+    loglik.j <- log.lik.gij(data, pi_hats, alphas_hats)
+    logdiff <- abs(loglik.i - loglik.j)
+    loglik.i <- loglik.j
+    logs <- c(logs, loglik.j)
+    iters <- iters + 1
+  }
+  return(list('alphas'=alphas_hats, 'weights'=pi_hats, 'clusters'=cluster, 'iterations'=iters, 'logliks'=logs, 'loglik'=loglik.j, 'logdiff'=logdiff))
+}
+
+```
+
+
+### Testing our Code
+
+The data I sampled below has a sample size of 900 (the same they use in the research paper): 
+- 500 of which comes from a Dirichlet(30,20,10), 
+- 100 from a Dirichlet(10,20,30), 
+- and 300 from a Dirichlet(15,15,15) 
+
+Here is a demonstration of the mixed model estimations using the clustering function given a clusters number $k=3$ : 
+```{r Sample}
+sample.dirichlet <- rbind(rdirichlet(500,c(30,20,10)), rdirichlet(100,c(10,20,30)), rdirichlet(300,c(15,15,15)))
+scheme1 <- Clustering(sample.dirichlet, k=3)
+
+```
+
+```{r stats}
+printer <- function(data){
+  cat("Data set: ", deparse(substitute(data)),"\n")
+  clusters <- table(data$clusters)
+  for (i in 1:nrow(data$alphas)) {
+    cat("alpha", i, ": ", round(data$alphas[i,],3), ", size of cluster =",as.vector(clusters[i]), "\n")
+  }
+  cat("Iterations required: ",data$iterations)
+  cat("\nPrecision: ",data$logdiff)
+  cat("\nlog-likelihood convergence: ",data$loglik)
+}
+
+printer(scheme1)
+```
+
+We can see the our function was able to figure estimate the alpha parameters and the corresponding proportion mixtures/cluster sizes of the mixed model pretty well. We can plot the result:
+
+```{r plotter}
+# Function to make a 3D plot given data and clusters
+plot_3d_with_clusters <- function(data, cluster_vector) {
+  clusters <- 1:max(cluster_vector)
+  cluster_colors <- rainbow(length(clusters))
+  plot3d(data[,1], data[,2], data[,3], xlab = "X", ylab = "Y", zlab = "Z", 
+         size = 7, col = cluster_colors[cluster_vector], alpha = 0.6)
+  legend3d("topright", legend = clusters, col = cluster_colors, pch = 16, cex = 1.5, title = "Cluster")
+  title3d(main = deparse(substitute(data)), col = "black", cex = 1.5)
+  rgl.viewpoint(theta = -10, phi = 15)
+  rglwidget()
+}
+
+```
+
+```{r plot, warning=FALSE, fig.show='asis'}
+plot_3d_with_clusters(sample.dirichlet, scheme1$clusters)
+
+```
+
+The algorithm looks to have performed fairly well with the clustering.
+
+In a more practical setting when someone does not know how many clusters or models there are, one can fit the model to various different selections of $k$ clusters, then calculate the AIC/BIC and pick accordingly. However, one must also consider the number of free parameters being estimated by the EM algorithm. How I understand it, the number of free parameters will be $(k-1) +kp$ where $k$ is the number of clusters, and $p$ is the dimension of the model. We have $k-1$ because this represents the number of parameters in $\pi$ where there are $k$ parameters, but subtract by 1 since one of the mixture components is redundant since the support has it that $\sum_k \pi = 1$. The multiplication of $k$ by $p$ represents the number of free parameters for each $\alpha_j$ (which is of dimension $p$) for $j=1,2,...,k$. After computing the AIC/BIC, as standard practice, you can plot the values for each model, and select the model with the lowest AIC/BIC, or preferably the one that illustrates an 'elbow joint'. 
+
+
+If you would like to see how I have used this approach in a practical setting with real data, you can read the end of my post on medium:
+https://ibrahimxbashir.medium.com/dirichlet-mixture-modelling-in-r-from-scratch-e29ee1a10c8b
+
+
