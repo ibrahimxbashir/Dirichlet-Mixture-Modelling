@@ -61,3 +61,6 @@ $$
 \end{array}
 $$
 
+If you would like to see how I have used this approach in a practical setting with real data, you can read the end of my post on medium:
+https://ibrahimxbashir.medium.com/dirichlet-mixture-modelling-in-r-from-scratch-e29ee1a10c8b
+
