@@ -116,31 +116,21 @@ With that said, the algorithm can be expressed as follows:
 
 2. While the log difference is greater than or equal to $\epsilon$:
 
-   1. Evaluate $\gamma_{ij}$ from equation $(4)$ using parameter values $\alpha$ and $\pi$ and the data.
+   - Evaluate $\gamma_{ij}$ from equation $(4)$ using parameter values $\alpha$ and $\pi$ and the data.
 
-   2. Update the mixture weights:
+   - Update the mixture weights using $\pi_j^{\text{new}} = \frac{N_j}{N}$ where $N_j = \sum_{i=1}^{N}\gamma_{ij}$.
 
-      $$ \pi_j^{\text{new}} = \frac{N_j}{N} $$
+   - For each observation $i = 1, \dots, N$:
 
-      where:
+     - Compute $z_i = \underset{j}{\mathrm{argmax}} \ \gamma_{ij}$.
+     - Assign data point $x_i$ to cluster $z_i$.
 
-      $$ N_j = \sum_{i=1}^{N}\gamma_{ij} $$
+   - For each cluster $j = 1, \dots, K$:
 
-   3. For each observation $i = 1, \dots, N$:
+     - If cluster $j$ is empty, use the initial values of $\alpha_j$ as the update.
+     - Otherwise update using $\alpha_j^{\text{new}} = \alpha_j^{\text{MLE}}$.
 
-      $$ z_i = \underset{j}{\mathrm{argmax}} \ \gamma_{ij} $$
-
-      Assign data point $x_i$ to cluster $z_i$.
-
-   4. For each cluster $j = 1, \dots, K$:
-
-      - If cluster $j$ is empty, use the initial values of $\alpha_j$ as the update.
-      - Otherwise:
-
-      $$ \alpha_j^{\text{new}} = \alpha_j^{\text{MLE}} $$
-
-   5. Re-evaluate the log-likelihood using the updated parameters.
-
+   - Re-evaluate the log-likelihood using the updated parameters.
 ---
 
 If you would like to see how I have used this approach in a practical setting with real data, you can read the end of my post on Medium:
