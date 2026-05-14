@@ -95,7 +95,7 @@ where $\Psi$ is the digamma function, $p$ is the dimension of the distribution, 
 
 This requires another Newton-Raphson algorithm to invert $\Psi$ (i.e. to solve $\Psi^{-1}(y) = x$ for the equation $\Psi(x) = y$), but the paper (P. Minka, 2000; Appendix C) provides a reasonable estimate. Five Newton iterations are generally sufficient to reach very high precision for the initialization used in my function.
 
-The research paper also provides an initialization for the $\alpha$ and $\pi$ parameters. For the Dirichlet Mixture Model, they initialize $\alpha$ with the centroids of KMeans multiplied by a scalar $c$ (they use $c=60$, as did I), and for $\pi$, it can be initialized either by sampling from a Dirichlet$(1,1,\dots,1)$ distribution or by using the empirical ratios of the number of cluster members from the KMeans algorithm divided by the total number of observations.
+The research paper also provides an initialization for the $\alpha$ and $\pi$ parameters. For the Dirichlet Mixture Model, they initialize $\alpha$ with the centroids of KMeans multiplied by a scalar $c$ (they use $c=60$, as did I), and for $\pi$, it can be initialized either by sampling from a Dirichlet $(1,1,\dots,1)$ distribution or by using the empirical ratios of the number of cluster members from the KMeans algorithm divided by the total number of observations.
 
 The paper uses the KMeans method, so I did too.
 
