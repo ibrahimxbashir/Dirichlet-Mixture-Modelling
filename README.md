@@ -31,7 +31,7 @@ The density of a mixture model with $K$ components for an observation $x_i$ is g
 
 $$ p(x_i) = \sum_{j=1}^{K} \pi_j f_j(x_i \mid \alpha_j) \quad \text{(1)} $$
 
-where $\pi$ is a vector of length $K$ of weights (i.e. $\pi = (\pi_1, \pi_2, \dots, \pi_K)$ ) that are used as the mixture proportions of each component such that $\sum_{j=1}^{K} \pi_j = 1 $$ and $$ 0 \le \pi_j \le 1$.
+where $\pi$ is a vector of length $K$ of weights (i.e. $\pi = (\pi_1, \pi_2, \dots, \pi_K)$ ) that are used as the mixture proportions of each component such that $\sum_{j=1}^{K} \pi_j = 1$ and $0 \le \pi_j \le 1$.
 
 The Dirichlet density component for cluster $j$ is given by:
 
@@ -63,11 +63,7 @@ $$ \pi_j^{\text{new}} = \frac{N_j}{N} $$
 
 where $N_j = \sum_{i=1}^{N}\gamma_{ij}$.
 
-The Hard EM assignment step is then given by:
-
-$$ z_i = \underset{j}{\mathrm{argmax}} \ \gamma_{ij} $$
-
-where each data point $x_i$ is assigned to the cluster with the highest membership probability.
+The Hard EM assignment step is then given by: $z_i = \underset{j}{\mathrm{argmax}} \ \gamma_{ij}$ where each data point $x_i$ is assigned to the cluster with the highest membership probability.
 
 The research paper references another paper (*Estimating a Dirichlet distribution*, Thomas P. Minka, 2000) to find a suitable estimate for $\alpha_j^{MLE}$.
 
