@@ -31,13 +31,13 @@ The density of a mixture model with $K$ components for an observation $x_i$ is g
 
 $$ p(x_i) = \sum_{j=1}^{K} \pi_j f_j(x_i \mid \alpha_j) \quad \text{(1)} $$
 
-where $\pi$ is a vector of length $K$ of weights (i.e. $\pi = (\pi_1, \pi_2, \dots, \pi_K)$ ) that are used as the mixture proportions of each component such that $$ \sum_{j=1}^{K} \pi_j = 1 $$ and $$ 0 \le \pi_j \le 1 $$.
+where $\pi$ is a vector of length $K$ of weights (i.e. $\pi = (\pi_1, \pi_2, \dots, \pi_K)$ ) that are used as the mixture proportions of each component such that $\sum_{j=1}^{K} \pi_j = 1 $$ and $$ 0 \le \pi_j \le 1$.
 
 The Dirichlet density component for cluster $j$ is given by:
 
 $$ f_j(x_i \mid \alpha_j) = \frac{\Gamma\left(\sum_{m=1}^{p}\alpha_{jm}\right)}{\prod_{m=1}^{p}\Gamma(\alpha_{jm})} \prod_{m=1}^{p} x_{im}^{\alpha_{jm}-1} \quad \text{(2)} $$
 
-where $$ \alpha_j = (\alpha_{j1}, \alpha_{j2}, \dots, \alpha_{jp}) $$ is the parameter vector for mixture component $j$.
+where $\alpha_j = (\alpha_{j1}, \alpha_{j2}, \dots, \alpha_{jp})$ is the parameter vector for mixture component $j$.
 
 Accordingly, the log-likelihood of the model for a sample of size $N$ is given by:
 
@@ -55,13 +55,13 @@ which can be written as:
 
 $$ Q(\alpha, \pi \mid \alpha^{t-1}, \pi^{t-1}) = \sum_{i=1}^{N}\sum_{j=1}^{K} \gamma_{ij}\log\pi_j + \sum_{i=1}^{N}\sum_{j=1}^{K} \gamma_{ij}\log f_j(x_i \mid \alpha_j) \quad \text{(5)} $$
 
-where $$ z_i \in \{1,2,\dots,K\} $$ is the latent cluster assignment variable.
+where $z_i \in \{1,2,\dots,K\}$ is the latent cluster assignment variable.
 
 This function is optimized with respect to $\alpha$ and $\pi$, having us update:
 
 $$ \pi_j^{\text{new}} = \frac{N_j}{N} $$
 
-where $$ N_j = \sum_{i=1}^{N}\gamma_{ij} $$.
+where $N_j = \sum_{i=1}^{N}\gamma_{ij}$.
 
 The Hard EM assignment step is then given by:
 
