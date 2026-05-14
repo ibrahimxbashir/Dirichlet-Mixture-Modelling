@@ -43,6 +43,7 @@ $$
 where $\alpha_j = (\alpha_{j1}, \alpha_{j2}, \dots, \alpha_{jp})$ is the parameter vector for mixture component $j$.
 
 Accordingly, the log-likelihood of the model for a sample of size $N$ is given by:
+
 $$
 \log p(x_1, x_2, \dots, x_N \mid \alpha, \pi)
 =
@@ -54,7 +55,9 @@ $$
 \right)
 \quad \text{(3)}
 $$
+
 The equation that represents the probability of a data point $i$ belonging to cluster $j$ is given by:
+
 $$
 \gamma_{ij}
 =
@@ -66,7 +69,9 @@ $$
 }
 \quad \text{(4)}
 $$
+
 The approach in the paper implements a Hard EM algorithm. Accordingly, they optimize the expected complete-data log-likelihood function:
+
 $$
 Q(\alpha, \pi \mid \alpha^{t-1}, \pi^{t-1})
 =
@@ -77,7 +82,9 @@ E\left[
 x,\alpha^{t-1},\pi^{t-1}
 \right]
 $$
+
 which can be written as:
+
 $$
 Q(\alpha, \pi \mid \alpha^{t-1}, \pi^{t-1})
 =
@@ -88,17 +95,21 @@ Q(\alpha, \pi \mid \alpha^{t-1}, \pi^{t-1})
 \gamma_{ij}\log f_j(x_i \mid \alpha_j)
 \quad \text{(5)}
 $$
+
 where $z_i \in \{1,2,\dots,K\}$ is the latent cluster assignment variable.
 
 This function is optimized with respect to $\alpha$ and $\pi$, having us update: $\pi_j^{\text{new}} = \frac{N_j}{N}$ where $N_j = \sum_{i=1}^{N}\gamma_{ij}$.
 
 The Hard EM assignment step is then given by:
+
 $$
 z_i = \underset{j}{\mathrm{argmax}} \ \gamma_{ij}
 $$
+
 where each data point $x_i$ is assigned to the cluster with the highest membership probability.
 
 The research paper references another paper (*Estimating a Dirichlet distribution*, Thomas P. Minka, 2000) to find a suitable estimate for $\alpha_j^{MLE}$. It uses a fixed-point iteration to estimate the Dirichlet parameters:
+
 $$
 \Psi(\alpha_{jm}^{\text{new}})
 =
@@ -112,6 +123,7 @@ $$
 \log(x_{im})
 \quad \text{(6)}
 $$
+
 where $\Psi$ is the digamma function, $p$ is the dimension of the distribution, and the second term takes the mean of the log of the data points assigned to cluster $j$ corresponding to $\alpha_j$.
 
 This requires another Newton-Raphson algorithm to invert $\Psi$ (i.e. to solve $\Psi^{-1}(y)=x$ for the equation $\Psi(x)=y$), but the paper (P. Minka, 2000; Appendix C) provides a reasonable estimate. Five Newton iterations are generally sufficient to reach very high precision for the initialization used in my function.
@@ -123,6 +135,7 @@ With that said, the auxiliary functions (found in the `.rmd` section, and in the
 ### Dirichlet Mixture Modelling Algorithm
 
 With that said, the algorithm can be expressed as follows:
+
 $$
 \begin{array}{l}
 \text{Initialize the model parameters } \alpha, \pi, \text{ and the log likelihood using equation } (3). \\
