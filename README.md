@@ -16,13 +16,13 @@ By adjusting the values of the alpha parameters, you can control the shape and s
 I implemented the "Hard DMM 1" clustering algorithm for a mixture of Dirichlet distributions with provision for empty clusters (Algorithm 1) from the referenced research paper *"Clustering compositional data using Dirichlet mixture model"* by Samyajoy Pal and Christian Heumann (2022). Here is an overview of the relevant functions used in the algorithm.
 
 Let $X_1, X_2, \dots, X_N$ denote a random sample of size $N$, where each observation $x_i$ is a $p$-dimensional compositional vector satisfying:
-$$x_i = (x_{i1}, x_{i2}, \dots, x_{ip}), \qquad x_{im} > 0, \qquad \sum_{m=1}^{p} x_{im} = 1$$
+$$ x_i = (x_{i1}, x_{i2}, \dots, x_{ip}), \qquad x_{im} > 0, \qquad \sum_{m=1}^{p} x_{im} = 1 $$
 The density of a mixture model with $K$ components for an observation $x_i$ is given by the mixture density:
-$$p(x_i) = \sum_{j=1}^{K} \pi_j f_j(x_i \mid \alpha_j) \quad \text{(1)}$$
+$$ p(x_i) = \sum_{j=1}^{K} \pi_j f_j(x_i \mid \alpha_j) \quad \text{(1)} $$
 where $\pi$ is a vector of length $K$ of weights (i.e. $\pi = (\pi_1, \pi_2, \dots, \pi_K)$) that are used as the mixture proportions of each component such that $\sum_{j=1}^{K} \pi_j = 1$ and $0 \le \pi_j \le 1$.
 
 The Dirichlet density component for cluster $j$ is given by:
-$$f_j(x_i \mid \alpha_j)
+$$ f_j(x_i \mid \alpha_j)
 =
 \frac{
 \Gamma\left(\sum_{m=1}^{p}\alpha_{jm}\right)
@@ -31,11 +31,11 @@ $$f_j(x_i \mid \alpha_j)
 }
 \prod_{m=1}^{p}
 x_{im}^{\alpha_{jm}-1}
-\quad \text{(2)}$$
+\quad \text{(2)} $$
 where $\alpha_j = (\alpha_{j1}, \alpha_{j2}, \dots, \alpha_{jp})$ is the parameter vector for mixture component $j$.
 
 Accordingly, the log-likelihood of the model for a sample of size $N$ is given by:
-$$\log p(x_1, x_2, \dots, x_N \mid \alpha, \pi)
+$$ \log p(x_1, x_2, \dots, x_N \mid \alpha, \pi)
 =
 \sum_{i=1}^{N}
 \log
@@ -43,9 +43,9 @@ $$\log p(x_1, x_2, \dots, x_N \mid \alpha, \pi)
 \sum_{j=1}^{K}
 \pi_j f_j(x_i \mid \alpha_j)
 \right)
-\quad \text{(3)}$$
+\quad \text{(3)} $$
 The equation that represents the probability of a data point $i$ belonging to cluster $j$ is given by:
-$$\gamma_{ij}
+$$ \gamma_{ij}
 =
 \frac{
 \pi_j f_j(x_i \mid \alpha_j)
@@ -53,35 +53,35 @@ $$\gamma_{ij}
 \sum_{l=1}^{K}
 \pi_l f_l(x_i \mid \alpha_l)
 }
-\quad \text{(4)}$$
+\quad \text{(4)} $$
 The approach in the paper implements a Hard EM algorithm. Accordingly, they optimize the expected complete-data log-likelihood function:
-$$Q(\alpha, \pi \mid \alpha^{t-1}, \pi^{t-1})
+$$ Q(\alpha, \pi \mid \alpha^{t-1}, \pi^{t-1})
 =
 E\left[
 \sum_{i=1}^{N}
 \log(p(x_i,z_i \mid \alpha,\pi))
 \mid
 x,\alpha^{t-1},\pi^{t-1}
-\right]$$
+\right] $$
 which can be written as:
-$$Q(\alpha, \pi \mid \alpha^{t-1}, \pi^{t-1})
+$$ Q(\alpha, \pi \mid \alpha^{t-1}, \pi^{t-1})
 =
 \sum_{i=1}^{N}\sum_{j=1}^{K}
 \gamma_{ij}\log\pi_j
 +
 \sum_{i=1}^{N}\sum_{j=1}^{K}
 \gamma_{ij}\log f_j(x_i \mid \alpha_j)
-\quad \text{(5)}$$
+\quad \text{(5)} $$
 where $z_i \in \{1,2,\dots,K\}$ is the latent cluster assignment variable.
 
 This function is optimized with respect to $\alpha$ and $\pi$, having us update: $\pi_j^{\text{new}} = \frac{N_j}{N}$ where $N_j = \sum_{i=1}^{N}\gamma_{ij}$.
 
 The Hard EM assignment step is then given by:
-$$z_i = \underset{j}{\mathrm{argmax}} \ \gamma_{ij}$$
+$$ z_i = \underset{j}{\mathrm{argmax}} \ \gamma_{ij} $$
 where each data point $x_i$ is assigned to the cluster with the highest membership probability.
 
 The research paper references another paper (*Estimating a Dirichlet distribution*, Thomas P. Minka, 2000) to find a suitable estimate for $\alpha_j^{MLE}$. It uses a fixed-point iteration to estimate the Dirichlet parameters:
-$$\Psi(\alpha_{jm}^{\text{new}})
+$$ \Psi(\alpha_{jm}^{\text{new}})
 =
 \Psi\left(
 \sum_{m=1}^{p}
@@ -91,7 +91,7 @@ $$\Psi(\alpha_{jm}^{\text{new}})
 \frac{1}{N_j}
 \sum_{i:z_i=j}
 \log(x_{im})
-\quad \text{(6)}$$
+\quad \text{(6)} $$
 where $\Psi$ is the digamma function, $p$ is the dimension of the distribution, and the second term takes the mean of the log of the data points assigned to cluster $j$ corresponding to $\alpha_j$.
 
 This requires another Newton-Raphson algorithm to invert $\Psi$ (i.e. to solve $\Psi^{-1}(y)=x$ for the equation $\Psi(x)=y$), but the paper (P. Minka, 2000; Appendix C) provides a reasonable estimate. Five Newton iterations are generally sufficient to reach very high precision for the initialization used in my function.
@@ -103,7 +103,7 @@ With that said, the auxiliary functions (found in the `.rmd` section, and in the
 ### Dirichlet Mixture Modelling Algorithm
 
 With that said, the algorithm can be expressed as follows:
-$$\begin{array}{l}
+$$ \begin{array}{l}
 \text{Initialize the model parameters } \alpha, \pi, \text{ and the log likelihood using equation } (3). \\
 \\
 \textbf{While} \, \text{log difference} \ge \epsilon: \\
@@ -131,7 +131,7 @@ N_j = \sum_{i=1}^{N}\gamma_{ij}. \\
 \quad \quad \quad \quad \alpha_j^{\text{new}} = \alpha_j^{\text{MLE}} \\
 \\
 \quad 5. \ \text{Re-evaluate the log-likelihood using updated parameters.}
-\end{array}$$
+\end{array} $$
 
 If you would like to see how I have used this approach in a practical setting with real data, you can read the end of my post on Medium:
 
