@@ -16,13 +16,17 @@ By adjusting the values of the alpha parameters, you can control the shape and s
 I implemented the "Hard DMM 1" clustering algorithm for a mixture of Dirichlet distributions with provision for empty clusters (Algorithm 1) from the referenced research paper *"Clustering compositional data using Dirichlet mixture model"* by Samyajoy Pal and Christian Heumann (2022). Here is an overview of the relevant functions used in the algorithm.
 
 Let $X_1, X_2, \dots, X_N$ denote a random sample of size $N$, where each observation $x_i$ is a $p$-dimensional compositional vector satisfying:
+
 $$
 x_i = (x_{i1}, x_{i2}, \dots, x_{ip}), \qquad x_{im} > 0, \qquad \sum_{m=1}^{p} x_{im} = 1
 $$
+
 The density of a mixture model with $K$ components for an observation $x_i$ is given by the mixture density:
+
 $$
 p(x_i) = \sum_{j=1}^{K} \pi_j f_j(x_i \mid \alpha_j) \quad \text{(1)}
 $$
+
 where $\pi$ is a vector of length $K$ of weights (i.e. $\pi = (\pi_1, \pi_2, \dots, \pi_K)$) that are used as the mixture proportions of each component such that $\sum_{j=1}^{K} \pi_j = 1$ and $0 \le \pi_j \le 1$.
 
 The Dirichlet density component for cluster $j$ is given by:
