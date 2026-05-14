@@ -63,7 +63,11 @@ $$ \pi_j^{\text{new}} = \frac{N_j}{N} $$
 
 where $N_j = \sum_{i=1}^{N}\gamma_{ij}$.
 
-The Hard EM assignment step is then given by: $z_i = \underset{j}{\mathrm{argmax}} \ \gamma_{ij}$ where each data point $x_i$ is assigned to the cluster with the highest membership probability.
+The Hard EM assignment step is then given by: 
+
+$$ z_i = \underset{j}{\mathrm{argmax}} \ \gamma_{ij} $$ 
+
+where each data point $x_i$ is assigned to the cluster with the highest membership probability.
 
 The research paper references another paper (*Estimating a Dirichlet distribution*, Thomas P. Minka, 2000) to find a suitable estimate for $\alpha_j^{MLE}$.
 
