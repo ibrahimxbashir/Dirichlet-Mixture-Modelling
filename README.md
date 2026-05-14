@@ -26,6 +26,7 @@ $$
 where $\pi$ is a vector of length $K$ of weights (i.e. $\pi = (\pi_1, \pi_2, \dots, \pi_K)$) that are used as the mixture proportions of each component such that $\sum_{j=1}^{K} \pi_j = 1$ and $0 \le \pi_j \le 1$.
 
 The Dirichlet density component for cluster $j$ is given by:
+
 $$
 f_j(x_i \mid \alpha_j)
 =
@@ -38,6 +39,7 @@ f_j(x_i \mid \alpha_j)
 x_{im}^{\alpha_{jm}-1}
 \quad \text{(2)}
 $$
+
 where $\alpha_j = (\alpha_{j1}, \alpha_{j2}, \dots, \alpha_{jp})$ is the parameter vector for mixture component $j$.
 
 Accordingly, the log-likelihood of the model for a sample of size $N$ is given by:
